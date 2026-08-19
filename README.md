@@ -6,7 +6,7 @@ A headless [Omarchy](https://omarchy.org/) shell plugin that, by default, opens 
 
 - Omarchy with shell plugin support
 - [Omaclip installed and available as `omaclip`](https://github.com/rhemvi/omaclip#installation)
-- `bash`, `grep`, `ip`, `pgrep`, `hyprctl`, and `wtype`
+- `bash`, `grep`, `ip`, `pgrep`, and `hyprctl`
 
 ## Installation
 
@@ -65,7 +65,7 @@ The plugin owns `--copy-hook=omarchy-shell omaclip copied`; overriding it would 
 
 Set `pasteOnCopy` to `false` to close the workspace after selecting an entry without pasting it. The selected entry remains available on the clipboard.
 
-When automatic pasting is enabled, the plugin mirrors Omarchy's `Super+V` behavior directly: `Shift+Insert` for terminal-tagged windows and `Ctrl+V` for other applications.
+When automatic pasting is enabled, the plugin uses the same Hyprland key-state dispatches as Omarchy's `Super+V`: `Shift+Insert` for terminal-tagged windows and `Ctrl+V` for other applications.
 
 ### Network interface selection
 

@@ -15,6 +15,8 @@ Item {
   property bool launcherReportedPid: false
   property string pendingSpecialAction: ""
   property string afterToggle: ""
+  property string pasteMods: ""
+  property string pasteKey: ""
 
   readonly property var settings: {
     var config = shell && shell.shellConfig
@@ -155,7 +157,7 @@ Item {
   }
 
   function requestSpecialAction(action) {
-    if (pendingSpecialAction !== "" || specialStateProbe.running || toggleScratchpad.running || focusDelay.running || focusOmaclip.running || pasteDelay.running || pasteTargetProbe.running || paste.running) return "busy"
+    if (pendingSpecialAction !== "" || specialStateProbe.running || toggleScratchpad.running || focusDelay.running || focusOmaclip.running || pasteDelay.running || pasteTargetProbe.running || pasteKeyDown.running || pasteKeyReleaseDelay.running || pasteKeyUp.running) return "busy"
     pendingSpecialAction = action
     specialStateProbe.running = true
     return "ok"
@@ -196,7 +198,7 @@ Item {
     toggleScratchpad.running = true
   }
 
-  function pasteCommandForActiveWindow(text) {
+  function pasteShortcutForActiveWindow(text) {
     var terminal = false
     try {
       var activeWindow = JSON.parse(text)
@@ -211,13 +213,20 @@ Item {
       console.warn("Omaclip service could not parse Hyprland active window:", error)
     }
 
-    if (terminal) return ["wtype", "-M", "shift", "-P", "Insert", "-p", "Insert", "-m", "shift"]
-    return ["wtype", "-M", "ctrl", "-P", "v", "-p", "v", "-m", "ctrl"]
+    if (terminal) return ({ mods: "SHIFT", key: "Insert" })
+    return ({ mods: "CTRL", key: "V" })
+  }
+
+  function pasteKeyStateCommand(state) {
+    return ["hyprctl", "dispatch", "hl.dsp.send_key_state({ mods = \"" + pasteMods + "\", key = \"" + pasteKey + "\", state = \"" + state + "\" })"]
   }
 
   function pasteIntoActiveWindow(text) {
-    paste.command = pasteCommandForActiveWindow(text)
-    paste.running = true
+    var shortcut = pasteShortcutForActiveWindow(text)
+    pasteMods = shortcut.mods
+    pasteKey = shortcut.key
+    pasteKeyDown.command = pasteKeyStateCommand("down")
+    pasteKeyDown.running = true
   }
 
   Timer {
@@ -387,9 +396,33 @@ Item {
   }
 
   Process {
-    id: paste
+    id: pasteKeyDown
     onExited: function(exitCode) {
-      if (exitCode !== 0) console.warn("Omaclip paste failed with code", exitCode)
+      if (exitCode !== 0) {
+        root.pasteMods = ""
+        root.pasteKey = ""
+        console.warn("Omaclip paste key down failed with code", exitCode)
+        return
+      }
+      pasteKeyReleaseDelay.restart()
+    }
+  }
+
+  Timer {
+    id: pasteKeyReleaseDelay
+    interval: 50
+    onTriggered: {
+      pasteKeyUp.command = root.pasteKeyStateCommand("up")
+      pasteKeyUp.running = true
+    }
+  }
+
+  Process {
+    id: pasteKeyUp
+    onExited: function(exitCode) {
+      if (exitCode !== 0) console.warn("Omaclip paste key up failed with code", exitCode)
+      root.pasteMods = ""
+      root.pasteKey = ""
     }
   }
 
