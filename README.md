@@ -1,6 +1,6 @@
 # Omarchy Omaclip
 
-A headless [Omarchy](https://omarchy.org/) shell plugin that starts [Omaclip](https://github.com/rhemvi/omaclip), moves its window to a Hyprland special workspace, and closes the workspace after a clipboard entry is selected.
+A headless [Omarchy](https://omarchy.org/) shell plugin that, by default, opens [Omaclip](https://github.com/rhemvi/omaclip) in `special:scratchpad` and registers a copy hook that closes the workspace and pastes the copied entry into the focused window at the cursor location.
 
 ## Requirements
 
