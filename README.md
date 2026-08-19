@@ -58,12 +58,14 @@ All settings except `id` are optional.
 | `syncServerPort` | Omaclip default | `--sync-server-port` |
 | `themeColorPath` | Omaclip default | `--theme-color-path` |
 | `scratchpad` | `scratchpad` | Hyprland special workspace name |
-| `pasteDelayMs` | `200` | Delay before invoking Omarchy's `Super+V` universal paste |
+| `pasteDelayMs` | `200` | Delay before invoking Omarchy's universal paste behavior |
 | `pasteOnCopy` | `true` | Paste the selected entry after closing the workspace |
 
 The plugin owns `--copy-hook=omarchy-shell omaclip copied`; overriding it would disconnect the scratchpad copy flow.
 
 Set `pasteOnCopy` to `false` to close the workspace after selecting an entry without pasting it. The selected entry remains available on the clipboard.
+
+When automatic pasting is enabled, the plugin mirrors Omarchy's `Super+V` behavior directly: `Shift+Insert` for terminal-tagged windows and `Ctrl+V` for other applications.
 
 ### Network interface selection
 

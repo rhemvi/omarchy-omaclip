@@ -155,7 +155,7 @@ Item {
   }
 
   function requestSpecialAction(action) {
-    if (pendingSpecialAction !== "" || specialStateProbe.running || toggleScratchpad.running || focusDelay.running || focusOmaclip.running || pasteDelay.running || paste.running) return "busy"
+    if (pendingSpecialAction !== "" || specialStateProbe.running || toggleScratchpad.running || focusDelay.running || focusOmaclip.running || pasteDelay.running || pasteTargetProbe.running || paste.running) return "busy"
     pendingSpecialAction = action
     specialStateProbe.running = true
     return "ok"
@@ -194,6 +194,30 @@ Item {
     afterToggle = nextAction
     toggleScratchpad.command = ["hyprctl", "dispatch", "hl.dsp.workspace.toggle_special(\"" + scratchpad + "\")"]
     toggleScratchpad.running = true
+  }
+
+  function pasteCommandForActiveWindow(text) {
+    var terminal = false
+    try {
+      var activeWindow = JSON.parse(text)
+      var tags = Array.isArray(activeWindow.tags) ? activeWindow.tags : []
+      for (var i = 0; i < tags.length; i++) {
+        if (String(tags[i]).replace(/\*$/, "") === "terminal") {
+          terminal = true
+          break
+        }
+      }
+    } catch (error) {
+      console.warn("Omaclip service could not parse Hyprland active window:", error)
+    }
+
+    if (terminal) return ["wtype", "-M", "shift", "-P", "Insert", "-p", "Insert", "-m", "shift"]
+    return ["wtype", "-M", "ctrl", "-P", "v", "-p", "v", "-m", "ctrl"]
+  }
+
+  function pasteIntoActiveWindow(text) {
+    paste.command = pasteCommandForActiveWindow(text)
+    paste.running = true
   }
 
   Timer {
@@ -347,12 +371,23 @@ Item {
   Timer {
     id: pasteDelay
     interval: root.pasteDelayMs
-    onTriggered: paste.running = true
+    onTriggered: pasteTargetProbe.running = true
+  }
+
+  Process {
+    id: pasteTargetProbe
+    command: ["hyprctl", "activewindow", "-j"]
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: root.pasteIntoActiveWindow(text)
+    }
+    onExited: function(exitCode) {
+      if (exitCode !== 0) console.warn("Omaclip active window probe failed with code", exitCode)
+    }
   }
 
   Process {
     id: paste
-    command: ["wtype", "-M", "logo", "-P", "v", "-p", "v", "-m", "logo"]
     onExited: function(exitCode) {
       if (exitCode !== 0) console.warn("Omaclip paste failed with code", exitCode)
     }
