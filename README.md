@@ -5,18 +5,19 @@ A headless [Omarchy](https://omarchy.org/) shell plugin that, by default, opens 
 ## Requirements
 
 - Omarchy with shell plugin support
-- Omaclip installed and available as `omaclip`
+- [Omaclip installed and available as `omaclip`](https://github.com/rhemvi/omaclip#installation)
 - `bash`, `grep`, `ip`, `pgrep`, `hyprctl`, and `wtype`
 
 ## Installation
 
 ```bash
+yay -S omaclip-bin
 omarchy plugin add https://github.com/rhemvi/omarchy-omaclip --enable
 ```
 
 The plugin starts automatically after it is enabled. By default it waits for a usable network connection, launches Omaclip, and moves its window to `special:scratchpad` without opening that workspace.
 
-Use Omarchy's native `Super+S` binding to toggle the default scratchpad. Selecting an Omaclip entry writes it to the clipboard, closes the scratchpad, waits 200 ms for focus to return, and sends `Ctrl+Shift+V` with `wtype`.
+Use Omarchy's native `Super+S` binding to toggle the default scratchpad. Selecting an Omaclip entry writes it to the clipboard, closes the scratchpad, and pastes the copied entry at the cursor location.
 
 ## Configuration
 
@@ -48,7 +49,7 @@ All settings except `id` are optional.
 | `configPath` | Omaclip default | `--config-path` |
 | `debug` | Omaclip default | `--debug` |
 | `peersList` | Omaclip default | Array joined with `;` for `--peers-list` |
-| `mdnsInterface` | automatic | `--peers-mdns-interface` |
+| `mdnsInterface` | IPv4 default-route interface | `--peers-mdns-interface` |
 | `peersPollInterval` | Omaclip default | `--peers-poll-interval` |
 | `remoteClipboardsDisable` | Omaclip default | `--remote-clipboards-disable` |
 | `remoteClipboardsMaxHistory` | Omaclip default | `--remote-clipboards-max-history` |
@@ -62,7 +63,7 @@ The plugin owns `--copy-hook=omarchy-shell omaclip copied`; overriding it would 
 
 ### Network interface selection
 
-When `mdnsInterface` is omitted, the plugin waits for an IPv4 default route and launches Omaclip without `--peers-mdns-interface`. Omaclip then uses every suitable active multicast interface.
+When `mdnsInterface` is omitted, the plugin discovers the interface carrying the IPv4 default route, waits for it to be up with a global IPv4 address, and passes it to Omaclip as `--peers-mdns-interface`.
 
 Set `mdnsInterface` only to pin discovery to a particular interface:
 

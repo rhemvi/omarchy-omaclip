@@ -16,6 +16,7 @@ Item {
   property string pendingSpecialAction: ""
   property string afterToggle: ""
 
+  property string discoveredMdnsInterface: ""
   readonly property var settings: {
     var config = shell && shell.shellConfig
     var entries = config && Array.isArray(config.plugins) ? config.plugins : []
@@ -27,6 +28,7 @@ Item {
   readonly property string executable: String(settings.executable || "omaclip")
   readonly property string processName: executable.split("/").pop()
   readonly property string mdnsInterface: String(settings.mdnsInterface || "")
+  readonly property string effectiveMdnsInterface: mdnsInterface !== "" ? mdnsInterface : discoveredMdnsInterface
   readonly property string scratchpad: String(settings.scratchpad || "scratchpad")
   readonly property int clipboardMaxHistory: Math.max(1, Number(settings.clipboardMaxHistory || 100))
   readonly property int pasteDelayMs: Math.max(0, Number(settings.pasteDelayMs || 200))
@@ -52,7 +54,7 @@ Item {
     appendConfigured(command, "configPath", "config-path")
     appendConfigured(command, "debug", "debug")
     appendConfigured(command, "peersList", "peers-list")
-    if (mdnsInterface !== "") command.push("--peers-mdns-interface=" + mdnsInterface)
+    if (effectiveMdnsInterface !== "") command.push("--peers-mdns-interface=" + effectiveMdnsInterface)
     appendConfigured(command, "peersPollInterval", "peers-poll-interval")
     appendConfigured(command, "remoteClipboardsDisable", "remote-clipboards-disable")
     appendConfigured(command, "remoteClipboardsMaxHistory", "remote-clipboards-max-history")
@@ -73,7 +75,8 @@ Item {
       beginTracking(Number(result.substring(6)))
       return
     }
-    if (result === "ready") {
+    if (result === "ready" || result.indexOf("ready:") === 0) {
+      discoveredMdnsInterface = result.indexOf("ready:") === 0 ? result.substring(6) : ""
       startOmaclip()
       return
     }
@@ -210,7 +213,7 @@ Item {
     command: [
       "bash",
       "-c",
-      "name=\"$1\"; hook=\"$2\"; interface=\"$3\"; remote_disabled=\"$4\"; for pid in $(pgrep -x \"$name\" 2>/dev/null); do if tr '\\0' '\\n' < \"/proc/$pid/cmdline\" 2>/dev/null | grep -Fxq -- \"$hook\"; then printf 'adopt:%s\\n' \"$pid\"; exit 0; fi; done; if pgrep -x \"$name\" >/dev/null 2>&1; then echo external; exit 0; fi; if [ \"$remote_disabled\" = true ]; then echo ready; exit 0; fi; if [ -n \"$interface\" ]; then [ \"$(cat \"/sys/class/net/$interface/operstate\" 2>/dev/null)\" = up ] && ip -o -4 address show dev \"$interface\" scope global -tentative 2>/dev/null | grep -q . || { echo wait; exit 0; }; else ip -o -4 route show default 2>/dev/null | grep -q '^default .* dev ' && ip -o -4 address show scope global up 2>/dev/null | grep -q . || { echo wait; exit 0; }; fi; echo ready",
+      "name=\"$1\"; hook=\"$2\"; interface=\"$3\"; remote_disabled=\"$4\"; for pid in $(pgrep -x \"$name\" 2>/dev/null); do if tr '\\0' '\\n' < \"/proc/$pid/cmdline\" 2>/dev/null | grep -Fxq -- \"$hook\"; then printf 'adopt:%s\\n' \"$pid\"; exit 0; fi; done; if pgrep -x \"$name\" >/dev/null 2>&1; then echo external; exit 0; fi; if [ \"$remote_disabled\" = true ]; then echo ready; exit 0; fi; if [ -n \"$interface\" ]; then [ \"$(cat \"/sys/class/net/$interface/operstate\" 2>/dev/null)\" = up ] && ip -o -4 address show dev \"$interface\" scope global -tentative 2>/dev/null | grep -q . || { echo wait; exit 0; }; else previous=\"\"; for word in $(ip -o -4 route show default 2>/dev/null); do if [ \"$previous\" = dev ]; then interface=\"$word\"; break; fi; previous=\"$word\"; done; [ -n \"$interface\" ] && [ \"$(cat \"/sys/class/net/$interface/operstate\" 2>/dev/null)\" = up ] && ip -o -4 address show dev \"$interface\" scope global -tentative 2>/dev/null | grep -q . || { echo wait; exit 0; }; fi; printf 'ready:%s\\n' \"$interface\"",
       "omaclip-readiness",
       root.processName,
       root.copyHookArgument,
