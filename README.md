@@ -30,6 +30,7 @@ Plugin settings are stored inline in `~/.config/omarchy/shell.json`:
       "id": "omaclip.scratchpad",
       "clipboardMaxHistory": 100,
       "scratchpad": "scratchpad",
+      "pasteOnCopy": true,
       "pasteDelayMs": 200
     }
   ]
@@ -58,8 +59,11 @@ All settings except `id` are optional.
 | `themeColorPath` | Omaclip default | `--theme-color-path` |
 | `scratchpad` | `scratchpad` | Hyprland special workspace name |
 | `pasteDelayMs` | `200` | Delay before sending `Ctrl+Shift+V` |
+| `pasteOnCopy` | `true` | Paste the selected entry after closing the workspace |
 
 The plugin owns `--copy-hook=omarchy-shell omaclip copied`; overriding it would disconnect the scratchpad copy flow.
+
+Set `pasteOnCopy` to `false` to close the workspace after selecting an entry without pasting it. The selected entry remains available on the clipboard.
 
 ### Network interface selection
 

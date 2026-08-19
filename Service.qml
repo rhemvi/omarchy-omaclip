@@ -30,6 +30,7 @@ Item {
   readonly property string scratchpad: String(settings.scratchpad || "scratchpad")
   readonly property int clipboardMaxHistory: Math.max(1, Number(settings.clipboardMaxHistory || 100))
   readonly property int pasteDelayMs: Math.max(0, Number(settings.pasteDelayMs || 200))
+  readonly property bool pasteOnCopy: settings.pasteOnCopy === undefined || (settings.pasteOnCopy !== false && String(settings.pasteOnCopy).toLowerCase() !== "false")
   readonly property bool remoteClipboardsDisabled: settings.remoteClipboardsDisable === true || String(settings.remoteClipboardsDisable).toLowerCase() === "true"
   readonly property string copyHookArgument: "--copy-hook=omarchy-shell omaclip copied"
   function appendConfigured(command, settingName, flagName) {
@@ -180,8 +181,8 @@ Item {
     var action = pendingSpecialAction
     pendingSpecialAction = ""
     if (action === "copied") {
-      if (visible) runScratchpadToggle("paste")
-      else pasteDelay.restart()
+      if (visible) runScratchpadToggle(pasteOnCopy ? "paste" : "")
+      else if (pasteOnCopy) pasteDelay.restart()
       return
     }
     if (action === "toggle") {
@@ -376,6 +377,7 @@ Item {
         processId: root.managedPid > 0 ? root.managedPid : null,
         windowMoved: root.windowMoved,
         command: root.omaclipCommand,
+        pasteOnCopy: root.pasteOnCopy,
         mdnsInterface: root.mdnsInterface,
         scratchpad: root.scratchpad
       })
