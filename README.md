@@ -58,7 +58,7 @@ All settings except `id` are optional.
 | `syncServerPort` | Omaclip default | `--sync-server-port` |
 | `themeColorPath` | Omaclip default | `--theme-color-path` |
 | `scratchpad` | `scratchpad` | Hyprland special workspace name |
-| `pasteDelayMs` | `200` | Delay before sending `Ctrl+Shift+V` |
+| `pasteDelayMs` | `200` | Delay before invoking Omarchy's `Super+V` universal paste |
 | `pasteOnCopy` | `true` | Paste the selected entry after closing the workspace |
 
 The plugin owns `--copy-hook=omarchy-shell omaclip copied`; overriding it would disconnect the scratchpad copy flow.

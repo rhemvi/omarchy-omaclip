@@ -352,7 +352,7 @@ Item {
 
   Process {
     id: paste
-    command: ["wtype", "-M", "ctrl", "-M", "shift", "-P", "v", "-p", "v", "-m", "shift", "-m", "ctrl"]
+    command: ["wtype", "-M", "logo", "-P", "v", "-p", "v", "-m", "logo"]
     onExited: function(exitCode) {
       if (exitCode !== 0) console.warn("Omaclip paste failed with code", exitCode)
     }
