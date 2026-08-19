@@ -16,7 +16,6 @@ Item {
   property string pendingSpecialAction: ""
   property string afterToggle: ""
 
-  property string discoveredMdnsInterface: ""
   readonly property var settings: {
     var config = shell && shell.shellConfig
     var entries = config && Array.isArray(config.plugins) ? config.plugins : []
@@ -28,7 +27,6 @@ Item {
   readonly property string executable: String(settings.executable || "omaclip")
   readonly property string processName: executable.split("/").pop()
   readonly property string mdnsInterface: String(settings.mdnsInterface || "")
-  readonly property string effectiveMdnsInterface: mdnsInterface !== "" ? mdnsInterface : discoveredMdnsInterface
   readonly property string scratchpad: String(settings.scratchpad || "scratchpad")
   readonly property int clipboardMaxHistory: Math.max(1, Number(settings.clipboardMaxHistory || 100))
   readonly property int pasteDelayMs: Math.max(0, Number(settings.pasteDelayMs || 200))
@@ -54,7 +52,6 @@ Item {
     appendConfigured(command, "configPath", "config-path")
     appendConfigured(command, "debug", "debug")
     appendConfigured(command, "peersList", "peers-list")
-    if (effectiveMdnsInterface !== "") command.push("--peers-mdns-interface=" + effectiveMdnsInterface)
     appendConfigured(command, "peersPollInterval", "peers-poll-interval")
     appendConfigured(command, "remoteClipboardsDisable", "remote-clipboards-disable")
     appendConfigured(command, "remoteClipboardsMaxHistory", "remote-clipboards-max-history")
@@ -76,15 +73,15 @@ Item {
       return
     }
     if (result === "ready" || result.indexOf("ready:") === 0) {
-      discoveredMdnsInterface = result.indexOf("ready:") === 0 ? result.substring(6) : ""
-      startOmaclip()
+      var interfaceName = result.indexOf("ready:") === 0 ? result.substring(6) : mdnsInterface
+      startOmaclip(interfaceName)
       return
     }
     state = result === "external" ? "external-instance" : "waiting"
     readinessRetry.restart()
   }
 
-  function startOmaclip() {
+  function startOmaclip(interfaceName) {
     if (managedPid > 0 || launcher.running) return
     state = "launching"
     launcherReportedPid = false
@@ -94,7 +91,9 @@ Item {
       "setsid \"$@\" >/dev/null 2>&1 & printf '%s\\n' \"$!\"",
       "omaclip-launch"
     ]
-    launcher.command = command.concat(omaclipCommand)
+    var launchCommand = omaclipCommand.slice()
+    if (interfaceName !== "") launchCommand.push("--peers-mdns-interface=" + interfaceName)
+    launcher.command = command.concat(launchCommand)
     launcher.running = true
   }
 
