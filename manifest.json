@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "omaclip.scratchpad",
+  "name": "Omaclip scratchpad",
+  "version": "1.0.0",
+  "author": "Omaclip",
+  "license": "MIT",
+  "description": "Runs Omaclip as a headless shell service and manages its scratchpad copy flow.",
+  "kinds": [
+    "service"
+  ],
+  "entryPoints": {
+    "service": "Service.qml"
+  }
+}
