@@ -6,6 +6,9 @@ Item {
   id: root
 
   property var shell: null
+  readonly property string home: Quickshell.env("HOME") || ""
+  property var settings: ({})
+  property bool settingsLoaded: false
   property string state: "starting"
   property double managedPid: 0
   property bool processAlive: false
@@ -18,13 +21,23 @@ Item {
   property string pasteMods: ""
   property string pasteKey: ""
 
-  readonly property var settings: {
-    var config = shell && shell.shellConfig
-    var entries = config && Array.isArray(config.plugins) ? config.plugins : []
-    for (var i = 0; i < entries.length; i++) {
-      if (entries[i] && entries[i].id === "omaclip.scratchpad") return entries[i]
+  function loadSettings(raw) {
+    var entry = ({})
+    try {
+      var config = JSON.parse(String(raw || ""))
+      var entries = config && Array.isArray(config.plugins) ? config.plugins : []
+      for (var i = 0; i < entries.length; i++) {
+        if (entries[i] && entries[i].id === "omaclip.scratchpad") {
+          entry = entries[i]
+          break
+        }
+      }
+    } catch (error) {
+      console.warn("Omaclip service could not parse shell.json:", error)
     }
-    return ({})
+    settings = entry
+    settingsLoaded = true
+    checkReadiness()
   }
   readonly property string executable: String(settings.executable || "omaclip")
   readonly property string processName: executable.split("/").pop()
@@ -426,6 +439,16 @@ Item {
     }
   }
 
+  FileView {
+    id: shellConfigFile
+    path: root.home + "/.config/omarchy/shell.json"
+    watchChanges: true
+    printErrors: false
+    onLoaded: root.loadSettings(text())
+    onLoadFailed: function(error) { root.loadSettings("") }
+    onFileChanged: reload()
+  }
+
   IpcHandler {
     target: "omaclip"
 
@@ -452,5 +475,5 @@ Item {
     }
   }
 
-  Component.onCompleted: checkReadiness()
+  Component.onCompleted: shellConfigFile.reload()
 }
